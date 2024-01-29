@@ -1,11 +1,11 @@
 import { Text, View, StyleSheet } from "react-native";
-
-
-const Person = ({name, age}) => {
+ 
+const Games = ({name, genre, releaseYear})  => {
     return(     
         <View style={styles.container}>
             <Text style={styles.name}>Nome: {name}</Text>
-            <Text style={styles.age}>Idade: {age}</Text>
+            <Text style={styles.genre}>Gênero: {genre}</Text>
+            <Text style={styles.releaseYear}>Ano de lançamento: {releaseYear}</Text>
         </View>
     );
 }
@@ -20,15 +20,20 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
     name: {
-        fontSize: 22,
+        fontSize: 20,
         color: 'purple',
         fontFamily: 'Poppins_300Light'
     },
-    age: {
-        fontSize: 18,
-        fontFamily: 'PoorStory_400Regular',
+    genre: {
+        fontSize: 15,
+        fontFamily: 'Poppins_300Light',
+        color: 'black'
+    },
+    releaseYear: {
+        fontSize: 15,
+        fontFamily: 'Poppins_300Light',
         color: 'black'
     }
 })
 
-export default Person;
+export default Games;
