@@ -6,6 +6,7 @@ export const Title = styled.Text`
 `
 
 export const TitleButton = styled.Text`
+
     font-size: 19px;
     color: black; 
 `

@@ -1,112 +1,150 @@
 import { StatusBar } from 'expo-status-bar';
-
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import {
+  requestForegroundPermissionsAsync, //solicitar a permissão de localização
 
-import { useEffect, useState } from 'react';
+  getCurrentPositionAsync, //Captura a localização atual
 
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+  watchPositionAsync, //Captura em tempos a localização
 
+  LocationAccuracy //Precisão da captura
+
+} from 'expo-location'
 import MapViewDirections from 'react-native-maps-directions';
 
-import { mapsKey } from './utils/mapsKey';
 
-import {
-  requestForegroundPermissionsAsync, //solicito a permissao de localização
-  getCurrentPositionAsync //Captura a localização atual
-} from 'expo-location'
+import { mapsKey } from './utils/mapsKey';
 
 
 export default function App() {
 
-  const [initialPosition, setInitialPosition] = useState(null)
+  const mapReference = useRef(null);
+  const [initialPosition, setInitialPosition] = useState(null);
+  const[finalPosition, setFinalPosition] = useState({
+    latitude: -23.629205,
+    longitude: -46.471853
+  })
 
   async function CapturarLocalizacao() {
-
-    const { granted } = await requestForegroundPermissionsAsync();
+    const { granted } = await requestForegroundPermissionsAsync()
 
     if (granted) {
+      const currentPosition = await getCurrentPositionAsync()
 
-      const currentPosition = await getCurrentPositionAsync();
+      setInitialPosition(currentPosition)
 
-      await setInitialPosition(currentPosition)
-
-      console.log(initialPosition)
-
+      console.log(initialPosition);
     }
+  }
 
+  async function RecarregarVizualizacaoMapa(){
+    if (mapReference.current && initialPosition) 
+    {
+      await mapReference.current.fitToCoordinates(
+        [
+          {latitude: initialPosition.coords.latitude, longitude: initialPosition.coords.longitude},
+          {latitude: finalPosition.latitude, longitude: finalPosition.longitude}
+        ],
+        {
+          edgePadding: {top:60 , right: 60, bottom: 60 , left: 60},
+          animated: true
+        }
+      )
+    }
   }
 
   useEffect(() => {
+
     CapturarLocalizacao()
-  }, [1000])
+
+    //Capturar local em tempo real
+    watchPositionAsync({
+      accuracy : LocationAccuracy.High,
+      timeInterval : 1000,
+      distanceInterval : 1
+    }, async (response) => {
+
+      await setInitialPosition(response)
+      
+      // ao aproximar a tela mexe na angulacao da tela, a inclinando
+
+      mapReference.current?.animateCamera({
+        pitch : 60,
+        center : response.coords
+      })
+    })
+
+  }, [100000])
+
+  useEffect(() => {
+    RecarregarVizualizacaoMapa()
+  }, [initialPosition])
 
   return (
     <View style={styles.container}>
+
       {
         initialPosition != null
           ? (
             <MapView
+            ref={mapReference}
               initialRegion={{
                 latitude: initialPosition.coords.latitude,
                 longitude: initialPosition.coords.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005
+                latitudeDelta: 0.001,
+                longitudeDelta: 0.001
               }}
               provider={PROVIDER_GOOGLE}
               style={styles.map}
               customMapStyle={grayMapStyle}
             >
 
+              <Marker
+                coordinate={{
+                  latitude: -23.615018,
+                  longitude: -46.570744
+                }}
+                title='Exemplo de  outro local'
+                description='Qualquer lugar no meu mapa'
+                pinColor='#FF1493'
+              />
+
               <MapViewDirections
                 origin={initialPosition.coords}
-
                 destination={{
-                  latitude: -23.599573054089415,
-                  longitude: -46.526778175109136,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005
+                  latitude: -23.629205,
+                  longitude: -46.471853,
+                  latitudeDelta: 0.001,
+                  longitudeDelta: 0.001
                 }}
-
                 apikey={mapsKey}
-
-                strokeColor='#60BFC5'
                 strokeWidth={5}
-                timePrecision='now'
-
-              />
-
-              {/* Criando marcador no mapa */}
-
-              <Marker
-                coordinate={{
-                  latitude: initialPosition.coords.latitude,
-                  longitude: initialPosition.coords.longitude,
-                }}
-                title='Você'
-                description='Localização aproximada !'
-                pinColor='red'
+                strokeColor='#00FFFF'
               />
 
               <Marker
                 coordinate={{
-                  latitude: -23.599573054089415,
-                  longitude: -46.526778175109136,
+                  latitude: finalPosition.latitude,
+                  longitude: finalPosition.longitude
                 }}
-                title='Lugar Qualquer'
-                description='Localização'
-                pinColor='blue'
+                title='Exemplo de  outro local'
+                description='Qualquer lugar no meu mapa'
+                pinColor='#00FF00'
               />
 
             </MapView>
           ) : (
+
             <>
-              <Text>Aguardando Localização  !!!</Text>
+              <Text>Localização não encontrada ! </Text>
 
               <ActivityIndicator />
+
             </>
           )
       }
-
 
     </View>
   );
@@ -122,8 +160,16 @@ const styles = StyleSheet.create({
 
   map: {
     flex: 1,
-    width: "100%"
-  }
+    width: '100%'
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    // justifyContent: "center",
+    width: "100%",
+    // height: 300,
+  },
+
 });
 
 const grayMapStyle = [
@@ -346,8 +392,8 @@ const grayMapStyle = [
         color: "#fbfbfb",
       },
     ],
-  },
-];
+  },]
+
 
 
 // import { StatusBar } from "expo-status-bar";
@@ -403,11 +449,7 @@ const grayMapStyle = [
 //   const midpoint = {
 //     latitude: (origin.latitude + destination.latitude) / 2,
 //     longitude: (origin.longitude + destination.longitude) / 2,
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <MapView
+//   };iew
 //         style={styles.map}
 //         provider={PROVIDER_GOOGLE}
 //         initialRegion={{
@@ -427,6 +469,10 @@ const grayMapStyle = [
 //           timePrecision="now"
 //           optimizeWaypoints={true}
 //         />
+
+//   return (
+//     <View style={styles.container}>
+//       <MapV
 //         {/* Criando um marcador no mapa */}
 //         <Marker
 //           coordinate={{
