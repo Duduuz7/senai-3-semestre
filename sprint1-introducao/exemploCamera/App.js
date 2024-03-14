@@ -3,7 +3,15 @@ import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-na
 import { Camera, CameraType } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 
+import * as MediaLibrary from "expo-media-library"
+
+import * as FileSystem from 'expo-file-system';
+
+import * as MediaLibrary from 'expo-media-library';
+
 import { FontAwesome } from "@expo/vector-icons"
+
+import { Ionicons } from '@expo/vector-icons';
 
 export default function App() {
 
@@ -20,7 +28,11 @@ export default function App() {
   useEffect(() => {
 
     (async () => {
+
       const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+
+      const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+
     })();
 
   }, [])
@@ -37,6 +49,26 @@ export default function App() {
       console.log(photo)
 
     }
+  }
+
+   async function ClearPhoto() {
+
+    setPhoto(null)
+
+    setOpenModal(false)
+
+  }
+
+  async function UploadPhoto() {
+
+    await MediaLibrary.createAssetAsync(photo)
+      .then(() => {
+        setOpenModal(false)
+        alert("Foto salva com sucesso !!!")
+      }).catch(error => {
+        alert("Nao foi possível processar a foto !!!")
+      })
+
   }
 
   return (
@@ -57,7 +89,7 @@ export default function App() {
             onPress={() => setTipoCamera(tipoCamera == CameraType.front ? CameraType.back : CameraType.front)}
           >
 
-            <Text style={styles.txtFlip}>Trocar</Text>
+            <Ionicons name="camera-reverse" size={32} color="white" />
 
           </TouchableOpacity>
 
@@ -66,7 +98,7 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.btnCapture}
+            style={styles.btnFlash}
             onPress={() => setFlashMode(flashMode === Camera.Constants.FlashMode.off
               ? Camera.Constants.FlashMode.on
               : Camera.Constants.FlashMode.off)}
@@ -90,13 +122,22 @@ export default function App() {
                 source={{ uri: photo }}
               />
 
-              <TouchableOpacity style={styles.btnCapture} onPress={() => setOpenModal(false)}>
-                <FontAwesome name="close" size={23} color={"black"} />
-              </TouchableOpacity>
+              <View style={{ margin: 10, flexDirection: 'row' }}>
+
+                {/* Botoes de controle */}
+                <TouchableOpacity style={styles.btnClear} onPress={() => ClearPhoto()}>
+                  <FontAwesome name="trash" size={25} color={"#ff0000"} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.btnUpload} onPress={() => UploadPhoto()}>
+                  <FontAwesome name="save" size={25} color={"#121212"} />
+                </TouchableOpacity>
+
+              </View>
 
             </View>
           </Modal>
-          
+
 
         </View>
 
@@ -126,6 +167,7 @@ const styles = StyleSheet.create({
   },
   btnFlip: {
     padding: 20,
+    marginBottom: 15
   },
   txtFlip: {
     fontSize: 20,
@@ -137,6 +179,32 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 20,
     // backgroundColor: "#121212",
+
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  btnFlash: {
+    padding: 20,
+    marginBottom: 19,
+    borderRadius: 20,
+    // backgroundColor: "#121212",
+
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  btnClear: {
+    backgroundColor: 'transparent',
+    padding: 20,
+
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  btnUpload: {
+    backgroundColor: 'transparent',
+    padding: 20,
 
     alignItems: "center",
     justifyContent: "center",
